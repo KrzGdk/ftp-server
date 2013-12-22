@@ -20,12 +20,14 @@ import java.util.logging.Logger;
 public class Server{
     public static void main(String[] args){
         try {
-            ServerSocket server = new ServerSocket(20);
-            Socket client = server.accept();
-            BufferedReader client_in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter client_out = new PrintWriter(client.getOutputStream());
-            while(client_in.readLine() != null){
-                client_out.println("echo dupa");
+            try (ServerSocket server = new ServerSocket(7777); Socket client = server.accept()) {
+                BufferedReader from_client = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                PrintWriter to_client = new PrintWriter(client.getOutputStream(), true);
+                String s;
+                while((s = from_client.readLine()) != null){
+                    System.out.println(s);
+                    to_client.println("echo dupa");
+                }
             }
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
