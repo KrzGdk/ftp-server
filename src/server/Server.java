@@ -1,38 +1,81 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/**
- *
- * @author Krzysiek
- */
-public class Server{
-    public static void main(String[] args){
-        try {
-            try (ServerSocket server = new ServerSocket(7777); Socket client = server.accept()) {
-                BufferedReader from_client = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                PrintWriter to_client = new PrintWriter(client.getOutputStream(), true);
-                String s;
-                while((s = from_client.readLine()) != null){
-                    System.out.println(s);
-                    to_client.println("echo dupa");
+public class Server implements Runnable{
+
+    protected int serverPort = 21;
+    protected ServerSocket serverSocket = null;
+    protected boolean isStopped = false;
+    protected Thread runningThread = null;
+    protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
+
+    public Server(int port){
+        this.serverPort = port;
+    }
+
+    @Override
+    public void run(){
+        synchronized(this){
+            this.runningThread = Thread.currentThread();
+        }
+        openServerSocket();
+        while(!isStopped()){
+            Socket clientSocket = null;
+            try {
+                clientSocket = this.serverSocket.accept();
+            } catch (IOException e) {
+                if(isStopped()) {
+                    System.out.println("Server Stopped.") ;
+                    return;
                 }
+                throw new RuntimeException(
+                    "Error accepting client connection", e);
             }
-        } catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-            
+            this.threadPool.execute(
+                new SessionThread(clientSocket,
+                    "Thread Pooled Server"));
+        }
+        this.threadPool.shutdown();
+        System.out.println("Server Stopped.") ;
+    }
+
+
+    private synchronized boolean isStopped() {
+        return this.isStopped;
+    }
+
+    public synchronized void stop(){
+        this.isStopped = true;
+        try {
+            this.serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing server", e);
+        }
+    }
+
+    private void openServerSocket() {
+        try {
+            this.serverSocket = new ServerSocket(this.serverPort);
+        } catch (IOException e) {
+            e.printStackTrace(System.out);
         }
     }
     
+    public static void main(String[] args){
+        Server server = new Server(21);
+        new Thread(server).start();
+
+        try {
+            Thread.sleep(120 * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace(System.out);
+        }
+        System.out.println("Stopping Server");
+        server.stop();
+    }
 }
