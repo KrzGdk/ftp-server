@@ -23,7 +23,7 @@ public class Server implements Runnable{
         synchronized(this){
             this.runningThread = Thread.currentThread();
         }
-        openServerSocket();
+        startServer();
         while(!isStopped()){
             Socket clientSocket = null;
             try {
@@ -50,6 +50,7 @@ public class Server implements Runnable{
     }
 
     public synchronized void stop(){
+        System.out.println("Stopping Server");
         this.isStopped = true;
         try {
             this.serverSocket.close();
@@ -58,24 +59,24 @@ public class Server implements Runnable{
         }
     }
 
-    private void openServerSocket() {
+    private void startServer() {
         try {
             this.serverSocket = new ServerSocket(this.serverPort);
+            System.out.println("Server started");
         } catch (IOException e) {
             e.printStackTrace(System.out);
         }
     }
     
     public static void main(String[] args){
-        Server server = new Server(21);
-        new Thread(server).start();
+        Server cmdServer = new Server(21);
+        new Thread(cmdServer).start();
 
         try {
             Thread.sleep(120 * 1000);
         } catch (InterruptedException e) {
             e.printStackTrace(System.out);
         }
-        System.out.println("Stopping Server");
-        server.stop();
+        cmdServer.stop();
     }
 }
