@@ -33,6 +33,8 @@ public class SessionThread implements Runnable{
         String request, prevRequest = "", response;
         try(BufferedReader fromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));PrintWriter toClient = new PrintWriter(clientSocket.getOutputStream(), true)) {
             while(true){
+                toClient.println("220-Welcome to ftp server");
+                toClient.println("220 You will be diconnected after 1 minute of inactivity");
                 request = fromClient.readLine();
                 System.out.println("Request: " + request);
                 now = Calendar.getInstance().getTimeInMillis();
@@ -110,8 +112,9 @@ public class SessionThread implements Runnable{
                                 while( (offset = dataIn.read(data)) != -1){
                                     file.write(data, 0, offset);
                                 }
-                            } //todo test
+                            } //todo thread
                             clientPassiveSocket.close();
+                            
                         }
                     }
                     else if(request.equals("NOOP")){
