@@ -3,7 +3,6 @@ package server;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -69,15 +68,14 @@ public class Server implements Runnable{
         }
     }
     
-    public static void main(String[] args) throws UnknownHostException{
+    public static void main(String[] args) {
         Server cmdServer = new Server(21);
         new Thread(cmdServer).start();
-        
-
+            
         try {
             Thread.sleep(120 * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace(System.out);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace(System.out);
         }
         cmdServer.stop();
     }
